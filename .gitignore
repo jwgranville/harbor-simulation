@@ -1,0 +1,31 @@
+# Python-generated cache files
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Local Python environments
+.venv/
+
+# Python packaging outputs
+build/
+dist/
+*.egg-info/
+
+# OS and file-browser metadata
+.DS_Store
+._*
+__MACOSX/
+Thumbs.db
+Desktop.ini
+
+# Local editor/office backup files
+*~
+~$*
+
+# Local editor configuration
+.vscode/
+
+# Local project notes and runtime state
+AUTHORING.md
+NOTES.md
+.ropemother/

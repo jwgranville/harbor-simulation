@@ -1,0 +1,43 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "harbor-simulation"
+version = "0.1.0.dev1"
+description = "A message-oriented harbor simulation for systems integration experiments."
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "ropemother>=0.1.0.dev10",
+]
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [
+    {name = "Joe Granville", email = "874605+jwgranville@users.noreply.github.com"}
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.13",
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest",
+    "pytest-asyncio",
+]
+dev = [
+    "black",
+    "build",
+    "pylint",
+    "pytest",
+    "pytest-asyncio",
+]
+
+[tool.black]
+line-length = 79
+target-version = ["py313"]
+
+[tool.pylint.main]
+py-version = "3.13"
+ignored-modules = ["ropemother"]
