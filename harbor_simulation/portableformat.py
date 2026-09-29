@@ -15,6 +15,7 @@ from harbor_simulation.projection import (
     DockingOutcome,
     FacilityStateProjection,
     HarborStateProjection,
+    SimulationRunCompletedProjection,
     TransitClearanceProjection,
     VesselStateProjection,
 )
@@ -29,7 +30,7 @@ from harbor_simulation.spatial import Orientation
 
 __author__ = "Joe Granville"
 __email__ = "874605+jwgranville@users.noreply.github.com"
-__date__ = "2026-09-27T16:28:19+00:00"
+__date__ = "2026-09-28T00:42:09+00:00"
 __license__ = "MIT"
 __version__ = "0.1.0.dev1"
 __status__ = "Prototype"
@@ -404,6 +405,40 @@ TRANSIT_CLEARANCE_PROJECTION_FORMAT = (
 )
 
 
+class SimulationRunCompletedProjectionAdapter(
+    ropemother.util.serializer.TypeAdapter[
+        SimulationRunCompletedProjection,
+        ropemother.util.onelinejson.JSONRecord,
+    ]
+):
+
+    def encode(
+        self, value: SimulationRunCompletedProjection
+    ) -> ropemother.util.onelinejson.JSONRecord:
+        return {"time": value.time.value}
+
+    def decode(
+        self, data: ropemother.util.onelinejson.JSONRecord
+    ) -> SimulationRunCompletedProjection:
+        time = _time_from_data(data.get("time"), "simulation completion time")
+        return SimulationRunCompletedProjection(time)
+
+
+_SIMULATION_RUN_COMPLETED_FORMAT_KEY = (
+    ropemother.format.portableformat.PortableFormatKey.from_str(
+        "harbor-simulation-run-completed"
+    )
+)
+
+SIMULATION_RUN_COMPLETED_PROJECTION_FORMAT = (
+    ropemother.format.portableformat.PortableFormat(
+        key=_SIMULATION_RUN_COMPLETED_FORMAT_KEY,
+        adapter=SimulationRunCompletedProjectionAdapter(),
+        serializer=ropemother.util.onelinejson.JSONL_SERIALIZER,
+    )
+)
+
+
 HARBOR_PORTABLE_FORMATS = (
     DOCKING_EVENT_PROJECTION_FORMAT,
     DOCKING_REQUEST_PROCEDURE_FORMAT,
@@ -412,6 +447,7 @@ HARBOR_PORTABLE_FORMATS = (
     NEXT_TRANSITION_TIME_FORMAT,
     HARBOR_STATE_PROJECTION_FORMAT,
     TRANSIT_CLEARANCE_PROJECTION_FORMAT,
+    SIMULATION_RUN_COMPLETED_PROJECTION_FORMAT,
 )
 
 

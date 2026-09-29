@@ -10,12 +10,13 @@ from harbor_simulation.portableformat import (
     DOCKING_EVENT_PROJECTION_FORMAT,
     HARBOR_PORTABLE_FORMATS,
     HARBOR_STATE_PROJECTION_FORMAT,
+    SIMULATION_RUN_COMPLETED_PROJECTION_FORMAT,
     TRANSIT_CLEARANCE_PROJECTION_FORMAT,
 )
 
 __author__ = "Joe Granville"
 __email__ = "874605+jwgranville@users.noreply.github.com"
-__date__ = "2026-09-27T22:53:31+00:00"
+__date__ = "2026-09-28T00:44:27+00:00"
 __license__ = "MIT"
 __version__ = "0.1.0.dev1"
 __status__ = "Prototype"
@@ -54,37 +55,47 @@ async def test_resource_conflict_round_trips_over_transport() -> None:
                 msg_type="transit-clearance",
                 payload_format=TRANSIT_CLEARANCE_PROJECTION_FORMAT,
             )
-            docking_receiver = await consumer.subscribe(
-                msg_topic="simulation.docking.events"
+            completion_emitter = await producer.register_emitter(
+                msg_topic="simulation.lifecycle",
+                msg_producer="simulation",
+                msg_type="simulation-run-completed",
+                payload_format=SIMULATION_RUN_COMPLETED_PROJECTION_FORMAT,
             )
-            state_receiver = await consumer.subscribe(
-                msg_topic="simulation.harbor.state"
-            )
-            clearance_receiver = await consumer.subscribe(
-                msg_topic="simulation.transit.clearance"
+            receiver = await consumer.subscribe(
+                msg_topic=ropemother.topic_tree("simulation")
             )
 
             result = await publish_resource_conflict_scenario(
-                docking_emitter, state_emitter, clearance_emitter
+                docking_emitter,
+                state_emitter,
+                clearance_emitter,
+                completion_emitter,
             )
 
-            docking_messages = await docking_receiver.receive_batch(
-                min_count=3, max_count=3
-            )
-            state_messages = await state_receiver.receive_batch(
-                min_count=4, max_count=4
-            )
-            clearance_messages = await clearance_receiver.receive_batch(
-                min_count=2, max_count=2
-            )
+            messages = []
+            while True:
+                message = await receiver.receive()
+                if message.msg_type == "simulation-run-completed":
+                    completion = message.payload
+                    break
+                messages.append(message)
             docking_events = tuple(
-                message.payload for message in docking_messages
+                message.payload
+                for message in messages
+                if message.msg_topic == "simulation.docking.events"
             )
-            states = tuple(message.payload for message in state_messages)
+            states = tuple(
+                message.payload
+                for message in messages
+                if message.msg_topic == "simulation.harbor.state"
+            )
             clearances = tuple(
-                message.payload for message in clearance_messages
+                message.payload
+                for message in messages
+                if message.msg_topic == "simulation.transit.clearance"
             )
 
+            assert completion.time == result.states[-1].time
             assert docking_events == result.docking_events
             assert states == result.states
             assert clearances == result.transit_clearances

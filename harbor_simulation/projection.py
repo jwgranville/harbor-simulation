@@ -20,7 +20,7 @@ from harbor_simulation.vessel import Vessel
 
 __author__ = "Joe Granville"
 __email__ = "874605+jwgranville@users.noreply.github.com"
-__date__ = "2026-09-26T17:44:16+00:00"
+__date__ = "2026-09-27T23:57:01+00:00"
 __license__ = "MIT"
 __version__ = "0.1.0.dev1"
 __status__ = "Prototype"
@@ -90,6 +90,11 @@ class TransitClearanceProjection:
     vessel: ActorReference
     within: TimeSpan
     start_spans: tuple[TimeSpan, ...]
+
+
+@dataclasses.dataclass(frozen=True)
+class SimulationRunCompletedProjection:
+    time: Time
 
 
 @dataclasses.dataclass(frozen=True)

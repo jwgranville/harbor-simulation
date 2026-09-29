@@ -13,6 +13,7 @@ from harbor_simulation.messagebus import (
 from harbor_simulation.portableformat import (
     DOCKING_EVENT_PROJECTION_FORMAT,
     HARBOR_STATE_PROJECTION_FORMAT,
+    SIMULATION_RUN_COMPLETED_PROJECTION_FORMAT,
     TRANSIT_CLEARANCE_PROJECTION_FORMAT,
 )
 from harbor_simulation.projection import ActorReference, DockingOutcome
@@ -21,7 +22,7 @@ from harbor_simulation.scenarios import run_resource_conflict_scenario
 
 __author__ = "Joe Granville"
 __email__ = "874605+jwgranville@users.noreply.github.com"
-__date__ = "2026-09-27T16:50:14+00:00"
+__date__ = "2026-09-28T00:56:10+00:00"
 __license__ = "MIT"
 __version__ = "0.1.0.dev1"
 __status__ = "Prototype"
@@ -33,6 +34,7 @@ async def test_resource_conflict_is_observable_over_message_bus() -> None:
         extra_formats=(
             DOCKING_EVENT_PROJECTION_FORMAT,
             HARBOR_STATE_PROJECTION_FORMAT,
+            SIMULATION_RUN_COMPLETED_PROJECTION_FORMAT,
             TRANSIT_CLEARANCE_PROJECTION_FORMAT,
         ),
         capture_sink=ropemother.InMemoryCaptureSink(),
@@ -56,6 +58,12 @@ async def test_resource_conflict_is_observable_over_message_bus() -> None:
         msg_type="transit-clearance",
         payload_format=TRANSIT_CLEARANCE_PROJECTION_FORMAT,
     )
+    completion_emitter = bus.register_emitter(
+        msg_topic="simulation.lifecycle",
+        msg_producer="simulation",
+        msg_type="simulation-run-completed",
+        payload_format=SIMULATION_RUN_COMPLETED_PROJECTION_FORMAT,
+    )
     docking_receiver = bus.subscribe(msg_topic="simulation.docking.events")
     state_receiver = bus.subscribe(msg_topic="simulation.harbor.state")
     clearance_receiver = bus.subscribe(
@@ -63,7 +71,7 @@ async def test_resource_conflict_is_observable_over_message_bus() -> None:
     )
 
     await publish_resource_conflict_scenario(
-        docking_emitter, state_emitter, clearance_emitter
+        docking_emitter, state_emitter, clearance_emitter, completion_emitter
     )
 
     docking_messages = await docking_receiver.receive_batch(

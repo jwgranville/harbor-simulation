@@ -15,6 +15,7 @@ from harbor_simulation.facility import Facility
 from harbor_simulation.portableformat import (
     DOCKING_EVENT_PROJECTION_FORMAT,
     HARBOR_STATE_PROJECTION_FORMAT,
+    SIMULATION_RUN_COMPLETED_PROJECTION_FORMAT,
     TRANSIT_CLEARANCE_PROJECTION_FORMAT,
 )
 from harbor_simulation.projection import (
@@ -23,6 +24,7 @@ from harbor_simulation.projection import (
     DockingEventProjector,
     DockingOutcome,
     HarborStateProjection,
+    SimulationRunCompletedProjection,
     TransitClearanceProjection,
 )
 from harbor_simulation.quantitative import Time, TimeSpan
@@ -36,7 +38,7 @@ from harbor_simulation.vessel import Vessel
 
 __author__ = "Joe Granville"
 __email__ = "874605+jwgranville@users.noreply.github.com"
-__date__ = "2026-09-27T16:49:47+00:00"
+__date__ = "2026-09-28T00:43:18+00:00"
 __license__ = "MIT"
 __version__ = "0.1.0.dev1"
 __status__ = "Prototype"
@@ -76,6 +78,16 @@ class MessageBusTransitClearancePublisher:
     async def publish(self, value: TransitClearanceProjection) -> None:
         await self.emitter.emit(
             value, payload_format=TRANSIT_CLEARANCE_PROJECTION_FORMAT
+        )
+
+
+@dataclasses.dataclass
+class MessageBusSimulationRunCompletedPublisher:
+    emitter: ropemother.broker.asyncendpoints.AsyncEmitter
+
+    async def publish(self, value: SimulationRunCompletedProjection) -> None:
+        await self.emitter.emit(
+            value, payload_format=SIMULATION_RUN_COMPLETED_PROJECTION_FORMAT
         )
 
 
@@ -141,12 +153,16 @@ async def publish_resource_conflict_scenario(
     docking_event_emitter: ropemother.broker.asyncendpoints.AsyncEmitter,
     harbor_state_emitter: ropemother.broker.asyncendpoints.AsyncEmitter,
     transit_clearance_emitter: ropemother.broker.asyncendpoints.AsyncEmitter,
+    completion_emitter: ropemother.broker.asyncendpoints.AsyncEmitter,
 ) -> ResourceConflictScenarioResult:
     result = run_resource_conflict_scenario()
     docking_publisher = MessageBusDockingEventPublisher(docking_event_emitter)
     state_publisher = MessageBusHarborStatePublisher(harbor_state_emitter)
     clearance_publisher = MessageBusTransitClearancePublisher(
         transit_clearance_emitter
+    )
+    completion_publisher = MessageBusSimulationRunCompletedPublisher(
+        completion_emitter
     )
 
     for event in result.docking_events:
@@ -156,4 +172,6 @@ async def publish_resource_conflict_scenario(
     for clearance in result.transit_clearances:
         await clearance_publisher.publish(clearance)
 
+    completion = SimulationRunCompletedProjection(result.states[-1].time)
+    await completion_publisher.publish(completion)
     return result
