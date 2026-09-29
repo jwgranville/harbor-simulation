@@ -10,6 +10,9 @@ from harbor_simulation.actor import Actor
 from harbor_simulation.berth import Berth
 from harbor_simulation.facility import Facility
 from harbor_simulation.messagebus import (
+    DOCKING_AUTHORIZED_MESSAGE_TYPE,
+    DOCKING_EVENTS_TOPIC,
+    DOCKING_REQUEST_REJECTED_MESSAGE_TYPE,
     MessageBusActorFacade,
     MessageBusDockingEventPublisher,
     MessageBusDockingRequestHandler,
@@ -50,7 +53,7 @@ from harbor_simulation.vessel import Vessel
 
 __author__ = "Joe Granville"
 __email__ = "874605+jwgranville@users.noreply.github.com"
-__date__ = "2026-09-27T16:31:37+00:00"
+__date__ = "2026-09-29T18:03:48+00:00"
 __license__ = "MIT"
 __version__ = "0.1.0.dev1"
 __status__ = "Prototype"
@@ -204,14 +207,14 @@ async def test_vessel_enters_berth_working_region_before_service(
     )
 
     docking_event_emitter = bus.register_emitter(
-        msg_topic="simulation.docking.events",
+        msg_topic=DOCKING_EVENTS_TOPIC,
         msg_producer="facility-a",
-        msg_type="docking-authorized",
-        additional_msg_types=("docking-request-rejected",),
+        msg_type=DOCKING_AUTHORIZED_MESSAGE_TYPE,
+        additional_msg_types=(DOCKING_REQUEST_REJECTED_MESSAGE_TYPE,),
         payload_format=DOCKING_EVENT_PROJECTION_FORMAT,
     )
     docking_event_receiver = bus.subscribe(
-        msg_topic="simulation.docking.events",
+        msg_topic=DOCKING_EVENTS_TOPIC,
         msg_producer="facility-a",
     )
     vessel_reference = ActorReference("vessel-a")
@@ -246,7 +249,7 @@ async def test_vessel_enters_berth_working_region_before_service(
     published_event = await docking_event_receiver.receive()
 
     assert published_event.msg_producer == "facility-a"
-    assert published_event.msg_type == "docking-authorized"
+    assert published_event.msg_type == DOCKING_AUTHORIZED_MESSAGE_TYPE
     assert published_event.payload == DockingEventProjection(
         Time(0),
         DockingOutcome.AUTHORIZED,

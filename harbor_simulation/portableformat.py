@@ -30,7 +30,7 @@ from harbor_simulation.spatial import Orientation
 
 __author__ = "Joe Granville"
 __email__ = "874605+jwgranville@users.noreply.github.com"
-__date__ = "2026-09-28T00:42:09+00:00"
+__date__ = "2026-09-29T18:04:55+00:00"
 __license__ = "MIT"
 __version__ = "0.1.0.dev1"
 __status__ = "Prototype"

@@ -29,7 +29,7 @@ from harbor_simulation.quantitative import Distance, Time, TimeDelta, TimeSpan
 
 __author__ = "Joe Granville"
 __email__ = "874605+jwgranville@users.noreply.github.com"
-__date__ = "2026-09-26T17:38:35+00:00"
+__date__ = "2026-09-29T18:05:15+00:00"
 __license__ = "MIT"
 __version__ = "0.1.0.dev1"
 __status__ = "Prototype"

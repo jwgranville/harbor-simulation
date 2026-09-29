@@ -38,10 +38,27 @@ from harbor_simulation.vessel import Vessel
 
 __author__ = "Joe Granville"
 __email__ = "874605+jwgranville@users.noreply.github.com"
-__date__ = "2026-09-28T00:43:18+00:00"
+__date__ = "2026-09-29T17:51:07+00:00"
 __license__ = "MIT"
 __version__ = "0.1.0.dev1"
 __status__ = "Prototype"
+
+
+SIMULATION_TOPIC = "simulation"
+DOCKING_EVENTS_TOPIC = "simulation.docking.events"
+HARBOR_STATE_TOPIC = "simulation.harbor.state"
+TRANSIT_CLEARANCE_TOPIC = "simulation.transit.clearance"
+SIMULATION_LIFECYCLE_TOPIC = "simulation.lifecycle"
+
+FACILITY_PRODUCER = "facility"
+SIMULATION_PRODUCER = "simulation"
+NAVIGATION_PRODUCER = "navigation"
+
+DOCKING_AUTHORIZED_MESSAGE_TYPE = "docking-authorized"
+DOCKING_REQUEST_REJECTED_MESSAGE_TYPE = "docking-request-rejected"
+HARBOR_STATE_MESSAGE_TYPE = "harbor-state"
+TRANSIT_CLEARANCE_MESSAGE_TYPE = "transit-clearance"
+SIMULATION_RUN_COMPLETED_MESSAGE_TYPE = "simulation-run-completed"
 
 
 @dataclasses.dataclass
@@ -50,9 +67,9 @@ class MessageBusDockingEventPublisher:
 
     async def publish(self, value: DockingEventProjection) -> None:
         if value.outcome is DockingOutcome.AUTHORIZED:
-            msg_type = "docking-authorized"
+            msg_type = DOCKING_AUTHORIZED_MESSAGE_TYPE
         else:
-            msg_type = "docking-request-rejected"
+            msg_type = DOCKING_REQUEST_REJECTED_MESSAGE_TYPE
 
         await self.emitter.emit(
             value,

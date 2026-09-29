@@ -5,7 +5,22 @@ import pytest
 import ropemother
 import ropemother.service
 
-from harbor_simulation.messagebus import publish_resource_conflict_scenario
+from harbor_simulation.messagebus import (
+    DOCKING_AUTHORIZED_MESSAGE_TYPE,
+    DOCKING_EVENTS_TOPIC,
+    DOCKING_REQUEST_REJECTED_MESSAGE_TYPE,
+    FACILITY_PRODUCER,
+    HARBOR_STATE_MESSAGE_TYPE,
+    HARBOR_STATE_TOPIC,
+    NAVIGATION_PRODUCER,
+    SIMULATION_LIFECYCLE_TOPIC,
+    SIMULATION_PRODUCER,
+    SIMULATION_RUN_COMPLETED_MESSAGE_TYPE,
+    SIMULATION_TOPIC,
+    TRANSIT_CLEARANCE_MESSAGE_TYPE,
+    TRANSIT_CLEARANCE_TOPIC,
+    publish_resource_conflict_scenario,
+)
 from harbor_simulation.portableformat import (
     DOCKING_EVENT_PROJECTION_FORMAT,
     HARBOR_PORTABLE_FORMATS,
@@ -16,7 +31,7 @@ from harbor_simulation.portableformat import (
 
 __author__ = "Joe Granville"
 __email__ = "874605+jwgranville@users.noreply.github.com"
-__date__ = "2026-09-28T00:44:27+00:00"
+__date__ = "2026-09-29T18:04:34+00:00"
 __license__ = "MIT"
 __version__ = "0.1.0.dev1"
 __status__ = "Prototype"
@@ -37,32 +52,32 @@ async def test_resource_conflict_round_trips_over_transport() -> None:
         )
         try:
             docking_emitter = await producer.register_emitter(
-                msg_topic="simulation.docking.events",
-                msg_producer="facility",
-                msg_type="docking-authorized",
-                additional_msg_types=("docking-request-rejected",),
+                msg_topic=DOCKING_EVENTS_TOPIC,
+                msg_producer=FACILITY_PRODUCER,
+                msg_type=DOCKING_AUTHORIZED_MESSAGE_TYPE,
+                additional_msg_types=(DOCKING_REQUEST_REJECTED_MESSAGE_TYPE,),
                 payload_format=DOCKING_EVENT_PROJECTION_FORMAT,
             )
             state_emitter = await producer.register_emitter(
-                msg_topic="simulation.harbor.state",
-                msg_producer="simulation",
-                msg_type="harbor-state",
+                msg_topic=HARBOR_STATE_TOPIC,
+                msg_producer=SIMULATION_PRODUCER,
+                msg_type=HARBOR_STATE_MESSAGE_TYPE,
                 payload_format=HARBOR_STATE_PROJECTION_FORMAT,
             )
             clearance_emitter = await producer.register_emitter(
-                msg_topic="simulation.transit.clearance",
-                msg_producer="navigation",
-                msg_type="transit-clearance",
+                msg_topic=TRANSIT_CLEARANCE_TOPIC,
+                msg_producer=NAVIGATION_PRODUCER,
+                msg_type=TRANSIT_CLEARANCE_MESSAGE_TYPE,
                 payload_format=TRANSIT_CLEARANCE_PROJECTION_FORMAT,
             )
             completion_emitter = await producer.register_emitter(
-                msg_topic="simulation.lifecycle",
-                msg_producer="simulation",
-                msg_type="simulation-run-completed",
+                msg_topic=SIMULATION_LIFECYCLE_TOPIC,
+                msg_producer=SIMULATION_PRODUCER,
+                msg_type=SIMULATION_RUN_COMPLETED_MESSAGE_TYPE,
                 payload_format=SIMULATION_RUN_COMPLETED_PROJECTION_FORMAT,
             )
             receiver = await consumer.subscribe(
-                msg_topic=ropemother.topic_tree("simulation")
+                msg_topic=ropemother.topic_tree(SIMULATION_TOPIC)
             )
 
             result = await publish_resource_conflict_scenario(
@@ -75,24 +90,24 @@ async def test_resource_conflict_round_trips_over_transport() -> None:
             messages = []
             while True:
                 message = await receiver.receive()
-                if message.msg_type == "simulation-run-completed":
+                if message.msg_type == SIMULATION_RUN_COMPLETED_MESSAGE_TYPE:
                     completion = message.payload
                     break
                 messages.append(message)
             docking_events = tuple(
                 message.payload
                 for message in messages
-                if message.msg_topic == "simulation.docking.events"
+                if message.msg_topic == DOCKING_EVENTS_TOPIC
             )
             states = tuple(
                 message.payload
                 for message in messages
-                if message.msg_topic == "simulation.harbor.state"
+                if message.msg_topic == HARBOR_STATE_TOPIC
             )
             clearances = tuple(
                 message.payload
                 for message in messages
-                if message.msg_topic == "simulation.transit.clearance"
+                if message.msg_topic == TRANSIT_CLEARANCE_TOPIC
             )
 
             assert completion.time == result.states[-1].time
